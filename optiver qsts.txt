@@ -1,3 +1,45 @@
+{
+Q: I see in some time_id we miss the order book data for some stocks, what is the reason for that?
+A: That is because there is no book update in continuous trading session on that period. One potential cause for this is volatility interruption. Actually one European exchange, Deutsche Borse, provides an explanation on this topic as well. Noted that this particular challenge of missing data is also a real-life challenge we are facing in Optiver.
+} - Pending for action
+
+{
+Am I correct in assuming the following -
+(For a given stock_id, time_id, and seconds_in_bucket (=n) combinations) -
+Book-data is basically the snapshot at end of the n(th) second of that time interval.
+And trade data for nth-second is the amount of trade on that stock that has happened from the ending of (n-1) seconds to ending of n(th) second. The price in trade is then the average price at which the trade happened ? .
+
+Correct. Therefore it is not easy to link those two fields together in a way of "book is the result of trade"
+} - Pending for action
+
+{
+In the trade_example dataframe of the sample notebook, the first row has order_count=12. order_count is explained as "The number of unique trade orders taking place", however i do not quite understand. Specifically, if one buy order (probably with a high bid price) trades with multiple sell orders (that were sitting in the order book), does this count as one trade order, or multiple?
+
+Ans:  it will count as multiple orders
+} - Understood
+
+{
+After several days' debugging, I found that the seconds_in_bucket for the hidden test set may not start from zero: https://www.kaggle.com/c/optiver-realized-volatility-prediction/discussion/250498#1376970. My three submissions with different handling of leading NA yielded three different public LB scores. However, all training order books start from seconds_in_bucket = 0. I'd like to confirm this here, and if this is the case, should we backfill the order data or shift the seconds to zero? Thanks.
+
+Hi @houndcl , that sounds weird… I checked the dataset locally and could not find a case which seconds_in_bucket did not start from zero. I will ask Kaggle data scientist to check the data in the backend as well.
+} - Pending for action
+
+
+{There are a few stock_id/time_id combinations that are missing at all (not only zero second). In training data there are 28 of those. Maybe that's the case?
+
+It's not about missing stock_id - time_id pair, as my code can handle this properly for all training data. Here I am talking about that some time_id doesn't have 0 second or doesn't start from 0 second. As we are informed that we can forward fill the order book, missing 0 second will be a problem. This hidden test set-specific feature has failed my 15 submissions.
+
+I am also having this ffill issue with the hidden test dataset. Have tried to submit historical volatility as predictions after appending samples of seconds_in_bucket on a regular interval starting from 0 and the public score became 0.9. If 0 was not explicitly added then I got 0.327 as expected. Probably ffill carried over the last row from the previous time_id. Maybe try ffill followed by bfill for the time being.
+
+I'm seeing the same issue. This line of code fails for the hidden test set.
+
+assert(df.time_id.nunique() == len(df.loc[df.seconds_in_bucket == 0]))
+
+where df is a single stock from the hidden test set.
+
+} - pending for action
+
+{
 A question about completeness of time_id in the test set. I notice that some book data doesn't have complete 3830 time ids, such as stock 38. This will bring some trouble if I want to build a model which considers stock interaction, e.g., if stock 38 strongly interacts with 37, I will include the features from 38 to predict 37:
 
 vol_37 @ time_id = F(features_37, features_38, time_id)
@@ -5,44 +47,52 @@ vol_37 @ time_id = F(features_37, features_38, time_id)
 For training, we can just exclude some rows with missing time_ids. But for the invisible test set, inference could be a little challenging, because we don't know whether the "interactor's" time_id is missing or not, unless we check the missing time_id and build model on the fly. For example, if we build an offline model vol_37 @ time_id = F(features_37, features_38, time_id) but the corresponding time_id is missing for the stock 38 in the test set, the prediction will throw an error.
 
 Just want to get a general idea how complete the test set is. Can we assume all time_id are available for any stock in the hidden test set?
-We are sorry but some of the (stock_id, time_id) pairs might be missing in the hidden test set too. Unfortunately, this is part of the challenge while working with highly granular financial data.
-Best regards,
-Matteo
 
 
+Ans: We are sorry but some of the (stock_id, time_id) pairs might be missing in the hidden test set too. Unfortunately, this is part of the challenge while working with highly granular financial data.
+}- pending for action
+
+{
 It's time series but in competition, I understood, you can not use a lagged features. 99% predictive models don't use order book (because it's too difficult to deal with, it's huge) and use 100500 lagged features which are built only using previous "targets". In this competition, you cannot use them? Only order book?
+} - understood
 
+{
+the order book is updated every time that a trade happens, but it can change because of other reasons too (e.g. someone inserts an order that is not executed). So at the end of the second the order book might be different from how it was after the latest trade.
+}
 
- the order book is updated every time that a trade happens, but it can change because of other reasons too (e.g. someone inserts an order that is not executed). So at the end of the second the order book might be different from how it was after the latest trade.
-
-
-
+{
 why is important normalized prices of the second most competitive buy level?
 There is all kinds of reasons. The entries of the order table can be thought of as supply and demand curves for that individual stock. As an idea, you might want to look at the divided difference to get an idea of the slope of the demand or supply curves. The more liquid the stock is near the WAP, the better an estimate this divided difference will be of those slopes
+} - Pending for action - trying with WAP within bid 1 & 2 and ask 1 & 2 and taking cross weightage
 
-
+{
 Hi, Could you tell us what is the approximate size of the dataset used to calculate public leaderboard score and what will be the approximate size of the dataset used to calculate the final leaderboard score?
 Hi, in both cases loading the hidden feature set should take slightly more than 3 GB of memory. There will be around 150k (stock_id, time_id) pairs.
+} - understood
 
 
-
+{
 The prices have been normalized so that they will start from 1 for every (stock_id, time_id). The size in cash terms is prize*size, so the sizes are not comparable after normalization.
+} - understood
 
-
+{
 1. data for stock_id=1 and stock_id=2 for time_id=5 are data that were taken at same time. Is that correct?
 2. "time_id are not sequential". Does that mean, data for time_id=11 could be data that was taken before data for time_id=5? Or Does that 'not sequential' refer to the fact that there is a gap between time_id=5 and time_id=11?
 Ans:
 1.correct
 2. the former: time_ids are not in chronological order
+} - understood
 
-
+{
 1) Are the time_id picked at random?
 2) If not, could you disclose how they are picked and will the live testing data be picked at the same manner?
+
 Ans:the time_ids are picked at random and indeed there may be gaps between them.
+} understood
 
-
+{
 I wouldn't use ANY Time Series model because, as stated above, time_ids are **not **in chronological order. Thus, we cannot, in my humble opinion, guarantee any model chronological inputs. Why they did not guarantee this is by far weird, given the nature of the phenomena: forecast volatility
-
+} - understood
 
 We will make sure the real private test set always has second_in_bucket starting from zero and would like to ask you to re-base the bucket in your code for the public test set. 
 
