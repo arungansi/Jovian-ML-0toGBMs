@@ -1,0 +1,4 @@
+1. should we fill the stock id artifically for the Time Ids where it is not booked
+
+
+2. If 'm' buy orders and 'n' sell orders were involved for a particular trade settlement at Time 't', what is the order_count at 't'
