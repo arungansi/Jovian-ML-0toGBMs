@@ -2,3 +2,9 @@
 
 
 2. If 'm' buy orders and 'n' sell orders were involved for a particular trade settlement at Time 't', what is the order_count at 't'
+
+Are all these Time_ids within one trading day or across multiple trading days. Seems like multiple trading days and roguhly about a years data. This is because:
+
+In a trading day of 6.5 hours there are 390 minutes. there are only maximum twenty 20-minutes windows on the upper side. In that we have received half the data (first ten minutes of each 20-minutes time window) which is ten. Ten minutes of 20-minutes time window in a day will result in a maximum of 600*10 records (where we have 600 seconds in one ten minute time window). But we have a maximum of 3830 * 600 (ignoring the missing data for zero seconds records and 28 stocks were not traded in the 3830 time sequences). Which seems like we have received 383 days of records or approximately an year worth of data of trading cycle pattern. Is this a fair assumption? 
+
+
