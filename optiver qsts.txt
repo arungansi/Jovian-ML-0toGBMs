@@ -96,3 +96,26 @@ I wouldn't use ANY Time Series model because, as stated above, time_ids are **no
 
 We will make sure the real private test set always has second_in_bucket starting from zero and would like to ask you to re-base the bucket in your code for the public test set. 
 
+
+{
+Since test dataset is generated from future, time_id in the test dataset will not appear in the training dataset. Am I right?
+
+Yes, the time id in the actual test set will be another random list of integers that has no overlap with id in the training and public test set
+}
+
+{
+"time_id are not sequential". Does that mean, data for time_id=11 could be data that was taken before data for time_id=5? Or Does that 'not sequential' refer to the fact that there is a gap between time_id=5 and time_id=11?
+
+the former: time_ids are not in chronological order
+}
+
+{
+Volatility gives an indication of the magnitude of price swings. If there was no market activity it is fine to have a lower volatility number because the price did not move (log return was 0).
+}
+
+
+{
+I'm trying to make trade data fixed sized. Since missing seconds_in_bucket implies no trade happening within that one-second window, is it technically correct to resample trade data to 600 seconds and fill it with zeros?
+
+Hi, it is correct to assume 0 for order count and size. Some assumptions are required for the price, though. A price of 0 might cause issues.
+}
