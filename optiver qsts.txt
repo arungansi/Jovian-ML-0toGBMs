@@ -119,3 +119,16 @@ I'm trying to make trade data fixed sized. Since missing seconds_in_bucket impli
 
 Hi, it is correct to assume 0 for order count and size. Some assumptions are required for the price, though. A price of 0 might cause issues.
 }
+
+
+{
+Hi,
+In data description, order_count is defined as The number of unique trade orders taking place. I'm somewhat confused about the uniqueness here. For example, if we have a trade record like:
+
+price | size | order_count
+1.001984 | 234 | 5
+Does it mean, 5 orders were placed and total shares traded were 234 with the mean price of 1.001984?
+
+
+Hi, that is correct. There were 5 separate trades that happened in that second, across all of them 234 shares were traded and the average price was 1.001984
+}
